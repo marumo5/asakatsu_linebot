@@ -23,7 +23,7 @@ class LineController extends Controller
 		// 署名のチェック
 		$signature = $request->headers->get(HTTPHeader::LINE_SIGNATURE);
 		if (!SignatureValidator::validateSignature($request->getContent(), $lineChannelSecret, $signature)) {
-		// TODO 不正アクセス
+		//  不正アクセス
 			$text = 'エラー';
 			error_log(print_r($text, true) . '\n', 3, '/var/www/html/log.txt');
 			return;
@@ -39,7 +39,12 @@ class LineController extends Controller
 			foreach ($events as $event) {
 				// 入力した文字取得
 				$message = $event->getText();
-				$message = $event->getText();
+				if (strcmp($message, '参加します') == 0) {
+					$replyToken = $event->getReplyToken();
+					$text = '朝活頑張りましょう！';
+					$textMessage = new TextMessageBuilder($text);
+					$lineBot->replyMessage($replyToken, $textMessage);
+				}
 				$replyToken = $event->getReplyToken();
 				$textMessage = new TextMessageBuilder($message);
 				$lineBot->replyMessage($replyToken, $textMessage);
