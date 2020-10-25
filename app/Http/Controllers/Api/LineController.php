@@ -13,41 +13,41 @@ use Exception;
 
 class LineController extends Controller
 {
-    public function webhook (Request $request)
-    {
-        $lineAccessToken = config('line.line_access_token', "");
-        $lineChannelSecret = config('line.line_channel_secret', "");
+	public function webhook (Request $request)
+	{
+		$lineAccessToken = config('line.line_access_token', "");
+		$lineChannelSecret = config('line.line_channel_secret', "");
 
 //error_log(print_r($lineAccessToken, true) . '\n', 3, '/var/www/html/log.txt');
 //error_log(print_r($lineChannelSecret, true) . '\n', 3, '/var/www/html/log.txt');
-        // 署名のチェック
-        $signature = $request->headers->get(HTTPHeader::LINE_SIGNATURE);
-        if (!SignatureValidator::validateSignature($request->getContent(), $lineChannelSecret, $signature)) {
-            // TODO 不正アクセス
-	$text = 'エラー';
-	error_log(print_r($text, true) . '\n', 3, '/var/www/html/log.txt');
-            return;
+		// 署名のチェック
+		$signature = $request->headers->get(HTTPHeader::LINE_SIGNATURE);
+		if (!SignatureValidator::validateSignature($request->getContent(), $lineChannelSecret, $signature)) {
+		// TODO 不正アクセス
+			$text = 'エラー';
+			error_log(print_r($text, true) . '\n', 3, '/var/www/html/log.txt');
+			return;
+		}
+
+		$httpClient = new CurlHTTPClient ($lineAccessToken);
+		$lineBot = new LINEBot($httpClient, ['channelSecret' => $lineChannelSecret]);
+
+		try {
+			// イベント取得
+			$events = $lineBot->parseEventRequest($request->getContent(), $signature);
+			error_log(print_r($events, true) . '\n', 3, '/var/www/html/log.txt');
+			foreach ($events as $event) {
+				// 入力した文字取得
+				$message = $event->getText();
+				$message = $event->getText();
+				$replyToken = $event->getReplyToken();
+				$textMessage = new TextMessageBuilder($message);
+				$lineBot->replyMessage($replyToken, $textMessage);
+			}
+		} catch (Exception $e) {
+			// TODO 例外
+			return;
+		}
+		return;
 	}
-
-        $httpClient = new CurlHTTPClient ($lineAccessToken);
-        $lineBot = new LINEBot($httpClient, ['channelSecret' => $lineChannelSecret]);
-
-        try {
-            // イベント取得
-            $events = $lineBot->parseEventRequest($request->getContent(), $signature);
-	    error_log(print_r($events, true) . '\n', 3, '/var/www/html/log.txt');
-            foreach ($events as $event) {
-                // 入力した文字取得
-                $message = $event->getText();
-                $message = $event->getText();
-                $replyToken = $event->getReplyToken();
-                $textMessage = new TextMessageBuilder($message);
-                $lineBot->replyMessage($replyToken, $textMessage);
-            }
-        } catch (Exception $e) {
-            // TODO 例外
-            return;
-        }
-        return;
-    }
 }
