@@ -39,6 +39,7 @@ class LineController extends Controller
 			foreach ($events as $event) {
 				// 入力した文字取得
 				$message = $event->getText();
+				$user_id = $event->getUserId();
 				if (strcmp($message, '参加します') == 0) {
 					$replyToken = $event->getReplyToken();
 					$text = '朝活頑張りましょう！';
