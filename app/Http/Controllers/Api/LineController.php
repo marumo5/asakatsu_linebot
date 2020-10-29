@@ -10,6 +10,7 @@ use LINE\LINEBot\SignatureValidator;
 use LINE\LINEBot\HTTPClient\CurlHTTPClient;
 use LINE\LINEBot\MessageBuilder\TextMessageBuilder;
 use Exception;
+use App\User as User;
 
 class LineController extends Controller
 {
@@ -35,20 +36,26 @@ class LineController extends Controller
 		try {
 			// イベント取得
 			$events = $lineBot->parseEventRequest($request->getContent(), $signature);
-			error_log(print_r($events, true) . '\n', 3, '/var/www/html/log.txt');
+//			error_log(print_r($events, true) . '\n', 3, '/var/www/html/log.txt');
 			foreach ($events as $event) {
 				// 入力した文字取得
 				$message = $event->getText();
-				$user_id = $event->getUserId();
 				if (strcmp($message, '参加します') == 0) {
+					$user_id = $event->getUserId();
+					$response = $lineBot->getProfile($user_id);
+					$profile = $response->getJSONDecodedBody();
+					$user_display_name = $profile['displayName'];
+					$user = new User();
+					$input = ['name' => $user_display_name, 'user_identifier' => $user_id, 'oversleeping_times' => 0];
+					$user->fill($input)->save();
 					$replyToken = $event->getReplyToken();
 					$text = '朝活頑張りましょう！';
 					$textMessage = new TextMessageBuilder($text);
-					$lineBot->replyMessage($replyToken, $textMessage);
+//					$lineBot->replyMessage($replyToken, $textMessage);
 				}
 				$replyToken = $event->getReplyToken();
 				$textMessage = new TextMessageBuilder($message);
-				$lineBot->replyMessage($replyToken, $textMessage);
+//				$lineBot->replyMessage($replyToken, $textMessage);
 			}
 		} catch (Exception $e) {
 			// TODO 例外
