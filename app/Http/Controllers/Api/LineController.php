@@ -10,7 +10,9 @@ use LINE\LINEBot\SignatureValidator;
 use LINE\LINEBot\HTTPClient\CurlHTTPClient;
 use LINE\LINEBot\MessageBuilder\TextMessageBuilder;
 use Exception;
-use App\User as User;
+use App\User;
+use App\Message;
+//use Illuminate\Support\Carbon;
 
 class LineController extends Controller
 {
@@ -18,12 +20,14 @@ class LineController extends Controller
 	{
 		$lineAccessToken = config('line.line_access_token', "");
 		$lineChannelSecret = config('line.line_channel_secret', "");
+//		error_log(print_r($lineAccessToken, true) . '\n', 3, '/var/www/html/log.txt');
+//		error_log(print_r($lineChannelSecret, true) . '\n', 3, '/var/www/html/log.txt');
 
 		// 署名のチェック
 		$signature = $request->headers->get(HTTPHeader::LINE_SIGNATURE);
 		if (!SignatureValidator::validateSignature($request->getContent(), $lineChannelSecret, $signature)) {
 		//  不正アクセス
-			$text = 'エラー';
+			$text = '不正アクセス';
 			error_log(print_r($text, true) . '\n', 3, '/var/www/html/log.txt');
 			return;
 		}
@@ -34,38 +38,53 @@ class LineController extends Controller
 		try {
 			// イベント取得
 			$events = $lineBot->parseEventRequest($request->getContent(), $signature);
-			error_log(print_r($events, true) . '\n', 3, '/var/www/html/log.txt');
 			foreach ($events as $event) {
 				// 入力した文字取得
-				$message = $event->getText();
-				if (strcmp($message, '朝活に参加します') == 0) {
-					//メッセージを送信したユーザーのIDを取得
-					$user_id = $event->getUserId();
+				$line_message = $event->getText();
+				//メッセージを送信したユーザーのIDを取得
+				$user_id = $event->getUserId();
+//				error_log(print_r($user_id, true) . '\n', 3, '/var/www/html/log.txt');
+				//ユーザーの存在を確認
+				$user_exist = User::where('user_identifier', $user_id)->exists();
+//				error_log(print_r($user_exist, true) . '\n', 3, '/var/www/html/log.txt');
+				if (strcmp($line_message, '朝活に参加します') == 0) {
 					//ユーザー情報を取得するメソッドを使用
 					$response = $lineBot->getProfile($user_id);
 					//取得した情報をJSONデコードする
 					$profile = $response->getJSONDecodedBody();
+//					error_log(print_r($profile, true) . '\n', 3, '/var/www/html/log.txt');
 					$user_display_name = $profile['displayName'];
-//					error_log(print_r($user_id, true) . '\n', 3, '/var/www/html/log.txt');
-					$user_exist = User::where('user_identifier', $user_id)->exists();
-					error_log(print_r($user_exist, true) . '\n', 3, '/var/www/html/log.txt');
 					//ユーザーが登録済みかどうか判断する
 					if ($user_exist) {
+						//ユーザーが登録済みの場合
 						$replyToken = $event->getReplyToken();
-						$message = $user_display_name . 'さんは参加登録済みです！朝活頑張りましょう！';
+						$text_message = $user_display_name . 'さんは参加登録済みです！朝活頑張りましょう！';
 					} else {
+						//ユーザーが未登録の場合
 						$user = new User();
 						$input = ['name' => $user_display_name, 'user_identifier' => $user_id, 'oversleeping_times' => 0];
-						$user->fill($input)->save();
+						$result = $user->fill($input)->save();
+						error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 						$replyToken = $event->getReplyToken();
-						$message = $user_display_name . 'さんようこそ！朝活頑張りましょう！';
+						$text_message = $user_display_name . 'さんようこそ！朝活頑張りましょう！';
 					}
-					$textMessage = new TextMessageBuilder($message);
+					$textMessage = new TextMessageBuilder($text_message);
 					$lineBot->replyMessage($replyToken, $textMessage);
+				} else {
+					//ユーザー朝活に参加している場合はメッセージテーブルに保存する
+					if ($user_exist) {
+						$user = User::where('user_identifier', $user_id)->first();
+						$user_id = $user->id;
+						$message = new Message();
+						$input = ['user_id' => $user_id, 'message' => $line_message];
+						$message->fill($input)->save();
+						$message->save();
+						$text = 'メッセージをDBに保存';
+						$replyToken = $event->getReplyToken();
+						$textMessage = new TextMessageBuilder($text);
+						$lineBot->replyMessage($replyToken, $textMessage);
+					}
 				}
-				$replyToken = $event->getReplyToken();
-				$textMessage = new TextMessageBuilder($message);
-				$lineBot->replyMessage($replyToken, $textMessage);
 			}
 		} catch (Exception $e) {
 			// TODO 例外
