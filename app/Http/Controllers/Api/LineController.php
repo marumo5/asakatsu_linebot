@@ -70,6 +70,19 @@ class LineController extends Controller
 					}
 					$textMessage = new TextMessageBuilder($text_message);
 					$lineBot->replyMessage($replyToken, $textMessage);
+				} elseif (strpos($line_message, '明日') || strpos($line_message, 'パス')) {
+					if ($user_exist) {
+						$user = User::where('user_identifier', $user_id)->first();
+						$user_id = $user->id;
+						$message = new Message();
+						$input = ['user_id' => $user_id, 'message' => $line_message];
+						$message->fill($input)->save();
+						$message->save();
+						$text = '承知しました。ぐっすり寝てくださいな。';
+						$replyToken = $event->getReplyToken();
+						$textMessage = new TextMessageBuilder($text);
+						$lineBot->replyMessage($replyToken, $textMessage);
+					}
 				} else {
 					//ユーザー朝活に参加している場合はメッセージテーブルに保存する
 					if ($user_exist) {
