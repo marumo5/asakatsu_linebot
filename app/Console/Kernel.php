@@ -12,9 +12,10 @@ class Kernel extends ConsoleKernel
      * ここにartisanコマンドクラスを記述する
      * @var array
      */
-    protected $commands = [
+	protected $commands = [
 		\App\Console\Commands\TestBatch::class,
-    ];
+		\App\Console\Commands\HayaokiBatch::class,
+	];
 
     /**
      * Define the application's command schedule.
@@ -22,11 +23,11 @@ class Kernel extends ConsoleKernel
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
-    protected function schedule(Schedule $schedule)
-    {
-		$schedule->command('batch:test')
-		->daily();
-    }
+	protected function schedule(Schedule $schedule)
+	{
+		$schedule->command('batch:test')->daily();
+		$schedule->command('batch:hayaoki')->dailyAt('7:00');
+	}
 
     /**
      * Register the commands for the application.
