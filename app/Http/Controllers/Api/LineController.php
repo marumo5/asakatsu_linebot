@@ -86,16 +86,23 @@ class LineController extends Controller
 				} else {
 					//ユーザー朝活に参加している場合はメッセージテーブルに保存する
 					if ($user_exist) {
-						$user = User::where('user_identifier', $user_id)->first();
-						$user_id = $user->id;
-						$message = new Message();
-						$input = ['user_id' => $user_id, 'message' => $line_message];
-						$message->fill($input)->save();
-						$message->save();
-						$text = 'メッセージをDBに保存';
-						$replyToken = $event->getReplyToken();
-						$textMessage = new TextMessageBuilder($text);
-						$lineBot->replyMessage($replyToken, $textMessage);
+						//最終的に時間を12時から23時に変更する
+						//DBへメッセージを保存する時間帯を指定
+						if (strtotime(date('H:i:s')) < strtotime('7:00:00') || strtotime('12:00:00') < strtotime(date('H:i:s'))) {
+							$result = '時間の範囲';
+							error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
+							$user = User::where('user_identifier', $user_id)->first();
+							$user_id = $user->id;
+							$message = new Message();
+							$input = ['user_id' => $user_id, 'message' => $line_message];
+							$message->fill($input)->save();
+							$message->save();
+							$text = 'メッセージをDBに保存';
+							$replyToken = $event->getReplyToken();
+							$textMessage = new TextMessageBuilder($text);
+							$lineBot->replyMessage($replyToken, $textMessage);
+						}
+
 					}
 				}
 			}
