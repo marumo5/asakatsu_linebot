@@ -49,9 +49,10 @@ class HayaokiBatch extends Command
 		//トランザクションを使いたい
 		//明日パス、おはようのメッセージがあったか確認する
 		DB::transaction(function() {
+	//		$text_message = null;
 			$messages = Message::get();
 			foreach($messages as $message) {
-				if (strtotime('22:00:00') <= strtotime($message->created_at) && strtotime($message->created_at) < strtotime('7:00:00')) {
+				if (strtotime('22:00:00') <= strtotime(date('H:i:s', strtotime($message->created_at))) || strtotime(date('H:i:s', strtotime($message->created_at))) < strtotime('7:00:00')) {
 					$user = User::find($message->user_id);
 					$user->oversleep_check = 1;
 					$user->save();
@@ -63,11 +64,26 @@ class HayaokiBatch extends Command
 				if ($user->oversleep_check === 0) {
 					$user->oversleeping_times += 1;
 					$user->save();
+	//				$text_message .= $user->name . "さん起きてください！！\n";
 				}
 			}
 			User::where('oversleep_check', 1)->update(['oversleep_check' => 0]);
 			Message::truncate();
 		}, 5);
+		//プッシュメッセージの送信
+/*		$lineAccessToken = config('line.line_access_token', "");
+		$lineChannelSecret = config('line.line_channel_secret', "");
+		$httpClient = new CurlHTTPClient($lineAccessToken);
+		$lineBot = new LINEBot($httpClient, ['channelSecret' => $lineChannelSecret]);
+		if (!$text_message) {
+			$text_message = '寝坊なし！さすがです！！';
+		}
+		$textMessageBuilder = new TextMessageBuilder($text_message);
+		$response = $lineBot->pushMessage($user->user_identifier, $textMessageBuilder);
+//			echo $response->getHTTPStatus() . ' ' . $response->getRawBody();
+//			echo $text_message;
+		error_log(print_r($text_message, true) . "\n", 3, '/var/www/html/log.txt');
+	}*/
 //以下は必要であれば、書き直す。寝坊回数は聞かれたら答えるようにする.以下は個人ラインに送信する方法
 /*		$text_message = null;
 		$users = User::all();
