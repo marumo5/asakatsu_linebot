@@ -6,11 +6,12 @@ use Illuminate\Console\Command;
 use App\User;
 use App\Message;
 use LINE\LINEBot;
-use LINE\LINEBot\Constant\HTTPHeader;
-use LINE\LINEBot\SignatureValidator;
+//use LINE\LINEBot\Constant\HTTPHeader;
+//use LINE\LINEBot\SignatureValidator;
 use LINE\LINEBot\HTTPClient\CurlHTTPClient;
 use LINE\LINEBot\MessageBuilder\TextMessageBuilder;
-use Exception;
+//use Exception;
+use Illuminate\Support\Facades\DB;
 
 class HayaokiBatch extends Command
 {
@@ -45,31 +46,45 @@ class HayaokiBatch extends Command
      */
     public function handle()
     {
-		$messages = Message::get();
-		$result = '13時です';
-		error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
-		foreach($messages as $message) {
-			if (strtotime(date('Y-m-d 6:00:00')) <= strtotime($message->created_at) && strtotime($message->created_at) < strtotime(date('Y-m-d 7:00:00'))) {
-				$user = User::find($message->user_id);
-				$user->oversleep_check = 1;
-				$user->save();
-				$result = $user->name . "さん早起きできましたね\n";
-			} else {
-				$result = $message->user_id . "さんちゃんと起きないと！\n";
+		//トランザクションを使いたい
+		//明日パス、おはようのメッセージがあったか確認する
+		DB::transaction(function() {
+			$messages = Message::get();
+			foreach($messages as $message) {
+				if (strtotime('22:00:00') <= strtotime($message->created_at) && strtotime($message->created_at) < strtotime('7:00:00')) {
+					$user = User::find($message->user_id);
+					$user->oversleep_check = 1;
+					$user->save();
+				}
 			}
-			error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
-		}
+			//寝坊回数を増やす
+			$users = User::all();
+			foreach($users as $user) {
+				if ($user->oversleep_check === 0) {
+					$user->oversleeping_times += 1;
+					$user->save();
+				}
+			}
+			User::where('oversleep_check', 1)->update(['oversleep_check' => 0]);
+			Message::truncate();
+		}, 5);
+//以下は必要であれば、書き直す。寝坊回数は聞かれたら答えるようにする.以下は個人ラインに送信する方法
+/*		$text_message = null;
 		$users = User::all();
 		foreach($users as $user) {
-			echo $user->name;
-			if ($user->oversleep_check === 0) {
-				$user->oversleeping_times += 1;
-				$user->save();
-			}
-		}
-		User::where('oversleep_check', 1)->update(['oversleep_check' => 0]);
-//		Message::truncate();
-//		error_log(print_r($users, true) . "\n", 3, '/var/www/html/log.txt');
+			$text_message = $user->name . 'さんの現在の寝坊回数は' . $user->oversleeping_times . "回です！\n";
+			$text_message .= $user->name . "さん朝から頑張ってますね！\n今日も最高の１日にしましょう！！";
+			//プッシュメッセージの送信
+			$lineAccessToken = config('line.line_access_token', "");
+			$lineChannelSecret = config('line.line_channel_secret', "");
+			$httpClient = new CurlHTTPClient($lineAccessToken);
+			$lineBot = new LINEBot($httpClient, ['channelSecret' => $lineChannelSecret]);
+			$textMessageBuilder = new TextMessageBuilder($text_message);
+			$response = $lineBot->pushMessage($user->user_identifier, $textMessageBuilder);
+			echo $response->getHTTPStatus() . ' ' . $response->getRawBody();
+			echo $text_message;
+			error_log(print_r($text_message, true) . "\n", 3, '/var/www/html/log.txt');
+		}*/
 		echo "成功です\n";
     }
 }
