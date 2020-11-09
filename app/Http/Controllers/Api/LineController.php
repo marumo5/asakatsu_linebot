@@ -38,15 +38,10 @@ class LineController extends Controller
 		try {
 			// イベント取得
 			$events = $lineBot->parseEventRequest($request->getContent(), $signature);
-			error_log(print_r($events, true) . '\n', 3, '/var/www/html/log.txt');
 			foreach ($events as $event) {
 				$event_type = $event->getType();
 				if ($event_type === 'join') {
 					$text_message = "皆さんの朝活を支援する\n\n朝活ラインボットです！\n\nラインボットの説明：\n\n①「朝活に参加します」と言って参加登録してください！\n\n②６時〜７時にメッセージをください！メッセージがない場合は寝坊したことになります！\n\n③次の日どうしても７時までに起きれそうにない場合は、２２時から６時の間に「明日はパス」や「明日は休み」とメッセージをください！特別に朝活を免除します！！\n\n④「寝坊した回数を教えて」と言われたらグループ員の寝坊した回数を教えます！\n\n⑤現在は月〜金（祝日を含む）のみラインボットが稼働します。今後、土日も朝活したいメンバー向けの機能を実装予定です。\n\n⑥今後、７時に寝坊した人の名前を通知する機能を実装予定です。\n\nそれじゃあ、朝活で人生を豊かにしましょう！！";
-			error_log(print_r($text_message, true) . '\n', 3, '/var/www/html/log.txt');
-					$replyToken = $event->getReplyToken();
-					$textMessage = new TextMessageBuilder($text_message);
-					$lineBot->replyMessage($replyToken, $textMessage);
 				}
 				if ($event_type === 'message') {
 					// 入力した文字取得
@@ -73,9 +68,6 @@ class LineController extends Controller
 							$result = $user->fill($input)->save();
 							$text_message = $user_display_name . 'さんようこそ！朝活頑張りましょう！';
 						}
-						$replyToken = $event->getReplyToken();
-						$textMessage = new TextMessageBuilder($text_message);
-						$lineBot->replyMessage($replyToken, $textMessage);
 					}
 					//メッセージ保存処理
 					if ($user_exist) {
@@ -108,13 +100,13 @@ class LineController extends Controller
 							foreach($users as $user) {
 								$text_message .= $user->name . 'さんは「' . $user->oversleeping_times . "回」です！\n";
 							}
-							$text_message .= "みなさん朝から頑張ってますね！\n今日も最高の１日にしましょう！！";
+							$text_message .= "朝から頑張ってますね！\n今日も最高の１日にしましょう！！";
 						}
-						$replyToken = $event->getReplyToken();
-						$textMessage = new TextMessageBuilder($text_message);
-						$lineBot->replyMessage($replyToken, $textMessage);
 					}
 				}
+				$replyToken = $event->getReplyToken();
+				$textMessage = new TextMessageBuilder($text_message);
+				$lineBot->replyMessage($replyToken, $textMessage);
 			}
 		} catch (Exception $e) {
 			// TODO 例外
