@@ -82,7 +82,7 @@ class LineController extends Controller
 						$user = User::where('user_identifier', $user_identifier)->first();
 						$user_id = $user->id;
 						//明日はパスする処理
-						if (strpos($line_message, 'パス') !== false || strpos($line_message, '休み') !== false && strpos($line_message, '明日') !== false) {
+						if ((strpos($line_message, 'パス') !== false || strpos($line_message, '休み') !== false) && strpos($line_message, '明日') !== false) {
 							if (strtotime(date('H:i:s')) < strtotime('6:00:00') || strtotime('22:00:00') <= strtotime(date('H:i:s'))) {
 								$message = new Message();
 								$input = ['user_id' => $user_id, 'message' => $line_message];
