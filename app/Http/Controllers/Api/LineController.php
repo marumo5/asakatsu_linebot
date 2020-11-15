@@ -39,12 +39,13 @@ class LineController extends Controller
 			// イベント取得
 			$events = $lineBot->parseEventRequest($request->getContent(), $signature);
 			foreach ($events as $event) {
+				error_log(print_r($event, true) . "\n", 3, '/var/www/html/log.txt');
 				$event_type = $event->getType();
 				if ($event_type === 'join') {
 					$text_message = "皆さんの朝活を支援する\n\n朝活ラインボットです！\n\nラインボットの説明：\n\n①「朝活に参加します」と言って参加登録してください！\n\n②６時〜７時にメッセージをください！メッセージがない場合は寝坊したことになります！\n\n③次の日どうしても７時までに起きれそうにない場合は、２２時から６時の間に「明日はパス」や「明日は休み」とメッセージをください！特別に朝活を免除します！！\n\n④「寝坊した回数を教えて」と言われたらグループ員の寝坊した回数を教えます！\n\n⑤現在は月〜金（祝日を含む）のみラインボットが稼働します。今後、土日も朝活したいメンバー向けの機能を実装予定です。\n\n⑥今後、７時に寝坊した人の名前を通知する機能を実装予定です。\n\nそれじゃあ、朝活で人生を豊かにしましょう！！";
 				}
 				if ($event_type === 'message') {
-					$result = 'イベントタイプ';
+					$result = 'messageイベントタイプ';
 					error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 					// 入力した文字取得
 					$line_message = $event->getText();
@@ -52,8 +53,12 @@ class LineController extends Controller
 					//メッセージを送信したユーザーのIDを取得
 					$user_identifier = $event->getUserId();
 					error_log(print_r($user_identifier, true) . "\n", 3, '/var/www/html/log.txt');
+					//所属IDを取得(groupId or roomId or userId)
+					$affiliation_id = $event->getEventSourceId();
+					error_log(print_r($affiliation_id, true) . "\n", 3, '/var/www/html/log.txt');
 					//ユーザーの存在を確認
 					$user_exist = User::where('user_identifier', $user_identifier)->exists();
+//					$user_exist = User::where('user_identifier', $user_identifier)->where('affiliation_id', $affiliation_id)->exists();
 					error_log(print_r($user_exist, true) . "\n", 3, '/var/www/html/log.txt');
 					//朝活への参加処理
 					if (strpos($line_message, '朝活') !== false && strpos($line_message, '参加') !== false) {
@@ -79,6 +84,8 @@ class LineController extends Controller
 							//ユーザーが未登録の場合
 							$user = new User();
 							$input = ['name' => $user_display_name, 'user_identifier' => $user_identifier];
+//							$input = ['name' => $user_display_name, 'user_identifier' => $user_identifier, 'affiliation_id' => $affiliation_id];
+							error_log(print_r($input, true) . "\n", 3, '/var/www/html/log.txt');
 							$result = $user->fill($input)->save();
 							$text_message = $user_display_name . 'さんようこそ！朝活頑張りましょう！';
 						}
@@ -88,6 +95,7 @@ class LineController extends Controller
 						$result = 'メッセージ保存処理';
 						error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 						$user = User::where('user_identifier', $user_identifier)->first();
+//						$user = User::where('user_identifier', $user_identifier)->where('affiliation_id', $affiliation_id)->first();
 						$user_id = $user->id;
 						//明日はパスする処理
 						if ((strpos($line_message, 'パス') !== false || strpos($line_message, '休み') !== false) && strpos($line_message, '明日') !== false) {
@@ -96,6 +104,8 @@ class LineController extends Controller
 							if (strtotime(date('H:i:s')) < strtotime('6:00:00') || strtotime('22:00:00') <= strtotime(date('H:i:s'))) {
 								$message = new Message();
 								$input = ['user_id' => $user_id, 'message' => $line_message];
+//								$input = ['user_id' => $user_id, 'message' => $line_message, 'affiliation_id' => $affiliation_id];
+								error_log(print_r($input, true) . "\n", 3, '/var/www/html/log.txt');
 								$message->fill($input)->save();
 								$text_message = '承知しました。ぐっすり寝てくださいな。';
 							//以下は必要に応じて使う
@@ -109,6 +119,7 @@ class LineController extends Controller
 							error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 							$message = new Message();
 							$input = ['user_id' => $user_id, 'message' => $line_message];
+//							$input = ['user_id' => $user_id, 'message' => $line_message, 'affiliation_id' => $affiliation_id];
 							$message->fill($input)->save();
 							//以下は必要に応じて使う
 //							$text_message = 'おはようございます！';
@@ -119,6 +130,7 @@ class LineController extends Controller
 							error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 							$text_message = "現在の寝坊回数\n";
 							$users = User::all();
+//							$users = User::where('affiliation_id', $affiliation_id)->get();
 							foreach($users as $user) {
 								$text_message .= $user->name . 'さんは「' . $user->oversleeping_times . "回」です！\n";
 							}
