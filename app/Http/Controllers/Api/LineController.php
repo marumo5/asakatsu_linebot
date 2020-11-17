@@ -125,7 +125,7 @@ class LineController extends Controller
 //							$text_message = 'おはようございます！';
 						}
 						//現在の寝坊回数をお知らせする
-						if (strpos($line_message, '寝坊') !== false && strpos($line_message, '回数') !== false) {
+						if (strpos($line_message, '寝坊') !== false && strpos($line_message, '回数') !== false && strpos($line_message, '教えて') !== false) {
 							$result = '寝坊回数';
 							error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 							$text_message = "現在の寝坊回数\n";
