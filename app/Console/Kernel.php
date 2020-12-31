@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
 	protected $commands = [
 		\App\Console\Commands\TestBatch::class,
 		\App\Console\Commands\HayaokiBatch::class,
+		\App\Console\Commands\MessagesReset::class,
 	];
 
     /**
@@ -27,6 +28,7 @@ class Kernel extends ConsoleKernel
 	{
 //		$schedule->command('batch:test')->daily();
 		$schedule->command('batch:hayaoki')->weekdays()->at('7:01');
+		$schedule->command('batch:Mreset')->weeklyOn(0, '7:01');
 	}
 
     /**
