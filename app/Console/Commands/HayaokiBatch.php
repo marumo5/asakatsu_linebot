@@ -46,30 +46,46 @@ class HayaokiBatch extends Command
      */
     public function handle()
     {
-		//トランザクションを使いたい
 		//明日パス、おはようのメッセージがあったか確認する
-		DB::transaction(function() {
-	//		$text_message = null;
-			$messages = Message::get();
-			foreach($messages as $message) {
-				if (strtotime('22:00:00') <= strtotime(date('H:i:s', strtotime($message->created_at))) || strtotime(date('H:i:s', strtotime($message->created_at))) < strtotime('7:00:00')) {
-					$user = User::find($message->user_id);
-					$user->oversleep_check = 1;
-					$user->save();
+		$affiliation_ids = User::groupBy('affiliation_id')->get(['affiliation_id']);
+		foreach($affiliation_ids as $affiliation_id) {
+			DB::transaction(function() use($affiliation_id) {
+				$affiliation_id = $affiliation_id->affiliation_id;
+				$text_message = null;
+				$messages = Message::where('affiliation_id', $affiliation_id)->get();
+				foreach($messages as $message) {
+					if (strtotime('22:00:00') <= strtotime(date('H:i:s', strtotime($message->created_at))) || strtotime(date('H:i:s', strtotime($message->created_at))) < strtotime('7:00:00')) {
+						$user = User::find($message->user_id);
+						$user->oversleep_check = 1;
+						$user->save();
+					}
 				}
-			}
-			//寝坊回数を増やす
-			$users = User::all();
-			foreach($users as $user) {
-				if ($user->oversleep_check === 0) {
-					$user->oversleeping_times += 1;
-					$user->save();
-	//				$text_message .= $user->name . "さん起きてください！！\n";
+				//寝坊回数を増やす
+				$users = User::where('affiliation_id', $affiliation_id)->get();
+				foreach($users as $user) {
+					if ($user->oversleep_check === 0) {
+						$user->oversleeping_times += 1;
+						$user->save();
+						$text_message .= $user->name . "さん起きてください！！\n";
+					}
 				}
-			}
-			User::where('oversleep_check', 1)->update(['oversleep_check' => 0]);
+				//プッシュメッセージの送信
+				$lineAccessToken = config('line.line_access_token', "");
+				$lineChannelSecret = config('line.line_channel_secret', "");
+				$httpClient = new CurlHTTPClient($lineAccessToken);
+				$lineBot = new LINEBot($httpClient, ['channelSecret' => $lineChannelSecret]);
+				if (!$text_message) {
+					$text_message = '寝坊なし！さすがです！！';
+				}
+				$textMessageBuilder = new TextMessageBuilder($text_message);
+				$response = $lineBot->pushMessage($affiliation_id, $textMessageBuilder);
+				$response->getHTTPStatus() . ' ' . $response->getRawBody();
+				echo $text_message;
+				error_log(print_r($text_message, true) . "\n", 3, '/var/www/html/develop_log.txt');
+				User::where('oversleep_check', 1)->update(['oversleep_check' => 0]);
+			}, 5);
 			Message::truncate();
-		}, 5);
+		}
 		//プッシュメッセージの送信
 /*		$lineAccessToken = config('line.line_access_token', "");
 		$lineChannelSecret = config('line.line_channel_secret', "");
