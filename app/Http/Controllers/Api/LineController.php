@@ -58,7 +58,7 @@ class LineController extends Controller
 					error_log(print_r($result, true) . "\n", 3, '/var/www/html/develop_log.txt');
 					error_log(print_r($affiliation_id, true) . "\n", 3, '/var/www/html/develop_log.txt');
 					//ユーザーの存在を確認
-					$user_exist = User::where('user_identifier', $user_identifier)->exists();
+					$user_exist = User::where('user_identifier', $user_identifier)->where('affiliation_id', $affiliation_id)->exists();
 					error_log(print_r($user_exist, true) . "\n", 3, '/var/www/html/log.txt');
 					//朝活への参加処理
 					if (strpos($line_message, '朝活') !== false && strpos($line_message, '参加') !== false) {
@@ -83,7 +83,7 @@ class LineController extends Controller
 							error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 							//ユーザーが未登録の場合
 							$user = new User();
-							$input = ['name' => $user_display_name, 'user_identifier' => $user_identifier];
+							$input = ['name' => $user_display_name, 'user_identifier' => $user_identifier, 'affiliation_id' => $affiliation_id];
 							$result = $user->fill($input)->save();
 							$text_message = $user_display_name . 'さんようこそ！朝活頑張りましょう！';
 						}
@@ -92,7 +92,7 @@ class LineController extends Controller
 					if ($user_exist) {
 						$result = 'メッセージ保存処理';
 						error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
-						$user = User::where('user_identifier', $user_identifier)->first();
+						$user = User::where('user_identifier', $user_identifier)->where('affiliation_id', $affiliation_id)->first();
 						$user_id = $user->id;
 						//明日はパスする処理
 						if ((strpos($line_message, 'パス') !== false || strpos($line_message, '休み') !== false) && strpos($line_message, '明日') !== false) {
@@ -100,7 +100,7 @@ class LineController extends Controller
 							error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 							if (strtotime(date('H:i:s')) < strtotime('6:00:00') || strtotime('22:00:00') <= strtotime(date('H:i:s'))) {
 								$message = new Message();
-								$input = ['user_id' => $user_id, 'message' => $line_message];
+								$input = ['user_id' => $user_id, 'message' => $line_message, 'affiliation_id' => $affiliation_id];
 								$message->fill($input)->save();
 								$text_message = '承知しました。ぐっすり寝てくださいな。';
 							//以下は必要に応じて使う
@@ -113,7 +113,7 @@ class LineController extends Controller
 							$result = 'おはよう';
 							error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 							$message = new Message();
-							$input = ['user_id' => $user_id, 'message' => $line_message];
+							$input = ['user_id' => $user_id, 'message' => $line_message, 'affiliation_id' => $affiliation_id];
 							$message->fill($input)->save();
 							//以下は必要に応じて使う
 //							$text_message = 'おはようございます！';
@@ -123,7 +123,7 @@ class LineController extends Controller
 							$result = '寝坊回数';
 							error_log(print_r($result, true) . "\n", 3, '/var/www/html/log.txt');
 							$text_message = "現在の寝坊回数\n";
-							$users = User::all();
+							$users = User::where('affiliation_id', $affiliation_id)->get();
 							foreach($users as $user) {
 								$text_message .= $user->name . 'さんは「' . $user->oversleeping_times . "回」です！\n";
 							}
