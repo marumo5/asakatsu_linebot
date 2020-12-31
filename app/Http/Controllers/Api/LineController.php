@@ -52,6 +52,11 @@ class LineController extends Controller
 					//メッセージを送信したユーザーのIDを取得
 					$user_identifier = $event->getUserId();
 					error_log(print_r($user_identifier, true) . "\n", 3, '/var/www/html/log.txt');
+					//所属先IDを取得(groupId or roomId or userId)
+					$affiliation_id = $event->getEventSourceId();
+					$result = 'グループID';
+					error_log(print_r($result, true) . "\n", 3, '/var/www/html/develop_log.txt');
+					error_log(print_r($affiliation_id, true) . "\n", 3, '/var/www/html/develop_log.txt');
 					//ユーザーの存在を確認
 					$user_exist = User::where('user_identifier', $user_identifier)->exists();
 					error_log(print_r($user_exist, true) . "\n", 3, '/var/www/html/log.txt');
