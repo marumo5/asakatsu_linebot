@@ -84,8 +84,8 @@ class HayaokiBatch extends Command
 				error_log(print_r($text_message, true) . "\n", 3, '/var/www/html/develop_log.txt');
 				User::where('oversleep_check', 1)->update(['oversleep_check' => 0]);
 			}, 5);
-			Message::truncate();
 		}
+		Message::truncate();
 		//プッシュメッセージの送信
 /*		$lineAccessToken = config('line.line_access_token', "");
 		$lineChannelSecret = config('line.line_channel_secret', "");
