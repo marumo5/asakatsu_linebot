@@ -27,7 +27,7 @@ class Kernel extends ConsoleKernel
 	protected function schedule(Schedule $schedule)
 	{
 //		$schedule->command('batch:test')->daily();
-		$schedule->command('batch:hayaoki')->weekdays()->at('7:01');
+		$schedule->command('batch:hayaoki')->weekdays()->at('7:00');
 		$schedule->command('batch:Mreset')->weeklyOn(0, '7:01');
 	}
 
