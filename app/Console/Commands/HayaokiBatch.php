@@ -51,6 +51,7 @@ class HayaokiBatch extends Command
 		foreach($affiliation_ids as $affiliation_id) {
 			DB::transaction(function() use($affiliation_id) {
 				$affiliation_id = $affiliation_id->affiliation_id;
+				error_log(print_r($affiliation_id, true) . "\n", 3, '/var/www/html/log.txt');
 				$text_message = null;
 				$messages = Message::where('affiliation_id', $affiliation_id)->get();
 				foreach($messages as $message) {
@@ -81,11 +82,13 @@ class HayaokiBatch extends Command
 				$response = $lineBot->pushMessage($affiliation_id, $textMessageBuilder);
 				$response->getHTTPStatus() . ' ' . $response->getRawBody();
 				echo $text_message;
-				error_log(print_r($text_message, true) . "\n", 3, '/var/www/html/develop_log.txt');
+				error_log(print_r($text_message, true) . "\n", 3, '/var/www/html/log.txt');
 				User::where('oversleep_check', 1)->update(['oversleep_check' => 0]);
 			}, 5);
 		}
 		Message::truncate();
+		echo "成功です\n";
+    }
 		//プッシュメッセージの送信
 /*		$lineAccessToken = config('line.line_access_token', "");
 		$lineChannelSecret = config('line.line_channel_secret', "");
@@ -117,6 +120,4 @@ class HayaokiBatch extends Command
 			echo $text_message;
 			error_log(print_r($text_message, true) . "\n", 3, '/var/www/html/log.txt');
 		}*/
-		echo "成功です\n";
-    }
 }
