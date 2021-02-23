@@ -70,6 +70,8 @@ class LineController extends Controller
 							$result = $user->fill($input)->save();
 							$text_message = $user_display_name . 'さんようこそ！朝活頑張りましょう！';
 						}
+					} elseif (strpos($line_message, '祝日') !== false) {
+						$text_message = 'ごめんなさい！修正しときます！';
 					}
 					//メッセージ保存処理
 					if ($user_exist) {
