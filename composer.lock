@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a3e99b5bb2bb93b6cf703a9dd182c3c6",
+    "content-hash": "7a3f6ad6cf34fc1a9750076c56834f51",
     "packages": [
         {
             "name": "dnoegel/php-xdg-base-dir",
@@ -858,16 +858,16 @@
         },
         {
             "name": "linecorp/line-bot-sdk",
-            "version": "6.0.0",
+            "version": "6.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/line/line-bot-sdk-php.git",
-                "reference": "88fc4afb3c50315708b1c4487845d9c03c44a62b"
+                "reference": "a3d3385aabed6e53071766587491d6e7fd2021e8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/line/line-bot-sdk-php/zipball/88fc4afb3c50315708b1c4487845d9c03c44a62b",
-                "reference": "88fc4afb3c50315708b1c4487845d9c03c44a62b",
+                "url": "https://api.github.com/repos/line/line-bot-sdk-php/zipball/a3d3385aabed6e53071766587491d6e7fd2021e8",
+                "reference": "a3d3385aabed6e53071766587491d6e7fd2021e8",
                 "shasum": ""
             },
             "require": {
@@ -936,7 +936,7 @@
                 "line",
                 "sdk"
             ],
-            "time": "2020-10-16T06:03:35+00:00"
+            "time": "2020-12-10T11:44:18+00:00"
         },
         {
             "name": "monolog/monolog",
