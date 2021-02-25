@@ -90,7 +90,7 @@ class LineController extends Controller
 							}
 						}
 						//DBへメッセージを保存する時間帯を指定
-						if (strtotime('6:00:00') <= strtotime(date('H:i:s')) && strtotime(date('H:i:s')) < strtotime('7:00:00')) {
+						if (strtotime('5:59:00') <= strtotime(date('H:i:s')) && strtotime(date('H:i:s')) < strtotime('7:00:00')) {
 							$message = new Message();
 							$input = ['user_id' => $user_id, 'message' => $line_message, 'affiliation_id' => $affiliation_id];
 							$message->fill($input)->save();
